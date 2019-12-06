@@ -1,0 +1,23 @@
+name: Docker Image CI
+
+on:
+  release:
+    types: [ published ]
+
+env:
+  DOCKER_PACKAGE_NAME: docker.pkg.github.com/${{ github.repository }}/alpine-zip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set env
+      run: |
+        echo ::set-env name=RELEASE_TAG::latest
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag $DOCKER_PACKAGE_NAME:$RELEASE_TAG
+    - name: Login to Registries
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u vivil --password-stdin
+    - name: Push to GitHub Packages
+      run: docker push $DOCKER_PACKAGE_NAME:$RELEASE_TAG
